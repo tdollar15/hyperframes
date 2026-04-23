@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenMontage Explainer</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg-deep: #0a0a0a;
+      --bg-card: #111111;
+      --accent-purple: #7c3aed;
+      --accent-cyan: #06b6d4;
+      --accent-magenta: #e879f9;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #71717a;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    [data-composition-id="main"] {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+    
+    /* Background particles */
+    .particle-field {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      opacity: 0.4;
+    }
+    
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+    }
+    
+    .glow-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--accent-purple);
+      top: -100px;
+      right: 10%;
+    }
+    
+    .glow-2 {
+      width: 300px;
+      height: 300px;
+      background: var(--accent-cyan);
+      bottom: -50px;
+      left: 15%;
+    }
+    
+    .glow-3 {
+      width: 250px;
+      height: 250px;
+      background: var(--accent-magenta);
+      top: 40%;
+      left: -80px;
+    }
+    
+    /* Grid lines */
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+    
+    /* Scene containers */
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      background: var(--bg-deep); /* Ensure each scene has a background */
+    }
+    
+    #scene-1 {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .scene-content {
+      width: 100%;
+      height: 100%;
+      padding: 8vh 10vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    
+    /* Typography */
+    .eyebrow {
+      font-size: clamp(12px, 1.2vw, 16px);
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 2vh;
+    }
+    
+    .headline {
+      font-size: clamp(40px, 6vw, 96px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 3vh;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subheadline {
+      font-size: clamp(20px, 2.5vw, 42px);
+      font-weight: 300;
+      line-height: 1.3;
+      color: var(--text-secondary);
+      max-width: 50vw;
+    }
+    
+    .body-text {
+      font-size: clamp(16px, 1.8vw, 24px);
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 45vw;
+    }
+    
+    /* Stats display */
+    .stats-row {
+      display: flex;
+      gap: 5vw;
+      margin-top: 5vh;
+      flex-wrap: wrap;
+    }
+    
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .stat-number {
+      font-size: clamp(36px, 5vw, 72px);
+      font-weight: 800;
+      color: var(--accent-purple);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .stat-label {
+      font-size: clamp(12px, 1.2vw, 16px);
+      font-weight: 400;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 1vh;
+    }
+    
+    /* Architecture cards */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2vw;
+      margin-top: 4vh;
+    }
+    
+    @media (max-width: 1200px) {
+      .arch-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .arch-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 12px;
+      padding: 3vh 3vw;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .arch-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+    }
+    
+    .arch-layer {
+      font-size: clamp(11px, 1.1vw, 13px);
+      font-weight: 600;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1.5vh;
+    }
+    
+    .arch-title {
+      font-size: clamp(20px, 2.5vw, 28px);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1.5vh;
+    }
+    
+    .arch-desc {
+      font-size: clamp(14px, 1.5vw, 17px);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Pipeline flow */
+    .pipeline-container {
+      display: flex;
+      align-items: center;
+      gap: 1.5vw;
+      margin-top: 4vh;
+      flex-wrap: wrap;
+    }
+    
+    .pipeline-stage {
+      background: var(--bg-card);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 8px;
+      padding: 1.5vh 2vw;
+      font-size: clamp(12px, 1.4vw, 16px);
+      font-weight: 600;
+      color: var(--text-primary);
+      position: relative;
+    }
+    
+    .pipeline-arrow {
+      color: var(--accent-cyan);
+      font-size: clamp(16px, 2vw, 24px);
+      opacity: 0.6;
+    }
+    
+    /* Feature list */
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2vh 4vw;
+      margin-top: 4vh;
+    }
+    
+    @media (max-width: 1000px) {
+      .feature-list {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1vw;
+    }
+    
+    .feature-bullet {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      margin-top: 0.8vh;
+      flex-shrink: 0;
+    }
+    
+    .feature-text {
+      font-size: clamp(14px, 1.6vw, 20px);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Code snippet style */
+    .code-block {
+      background: var(--bg-card);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 12px;
+      padding: 3vh 4vw;
+      font-family: 'SF Mono', 'Monaco', monospace;
+      font-size: clamp(13px, 1.5vw, 18px);
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-top: 3vh;
+    }
+    
+    .code-line {
+      display: flex;
+      gap: 1vw;
+    }
+    
+    .code-comment {
+      color: var(--text-tertiary);
+    }
+    
+    .code-highlight {
+      color: var(--accent-cyan);
+    }
+    
+    .code-string {
+      color: var(--accent-magenta);
+    }
+    
+    /* Final CTA */
+    .cta-box {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 16px;
+      padding: 4vh 5vw;
+      margin-top: 4vh;
+      text-align: center;
+    }
+    
+    .cta-text {
+      font-size: clamp(20px, 3vw, 32px);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1.5vh;
+    }
+    
+    .cta-sub {
+      font-size: clamp(14px, 1.8vw, 20px);
+      color: var(--text-secondary);
+    }
+    
+    /* Progress bar */
+    .progress-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-height: 700px) {
+      .scene-content {
+        padding: 4vh 8vw;
+      }
+      
+      .headline {
+        font-size: clamp(32px, 4vw, 64px);
+      }
+      
+      .subheadline, .body-text {
+        max-width: 60vw;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .scene-content {
+        padding: 4vh 5vw;
+      }
+      
+      .arch-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .feature-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-row {
+        gap: 3vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div data-composition-id="main" data-start="0" data-duration="47.5" data-width="1920" data-height="1080">
+    <!-- Narration audio tracks (Kokoro TTS) -->
+    <audio id="narration-1" data-start="0" data-duration="6" data-track-index="1" src="scene1.wav" data-volume="1"></audio>
+    <audio id="narration-2" data-start="6" data-duration="5.5" data-track-index="1" src="scene2.wav" data-volume="1"></audio>
+    <audio id="narration-3" data-start="11.5" data-duration="6" data-track-index="1" src="scene3.wav" data-volume="1"></audio>
+    <audio id="narration-4" data-start="17.5" data-duration="7" data-track-index="1" src="scene4.wav" data-volume="1"></audio>
+    <audio id="narration-5" data-start="24.5" data-duration="6.5" data-track-index="1" src="scene5.wav" data-volume="1"></audio>
+    <audio id="narration-6" data-start="31" data-duration="5.5" data-track-index="1" src="scene6.wav" data-volume="1"></audio>
+    <audio id="narration-7" data-start="36.5" data-duration="6" data-track-index="1" src="scene7.wav" data-volume="1"></audio>
+    <audio id="narration-8" data-start="42.5" data-duration="5" data-track-index="1" src="scene8.wav" data-volume="1"></audio>
+    
+    <!-- Background effects -->
+    <div class="grid-overlay"></div>
+    <div class="glow-orb glow-1"></div>
+    <div class="glow-orb glow-2"></div>
+    <div class="glow-orb glow-3"></div>
+    <div class="particle-field" id="particles"></div>
+    
+    <!-- Scene 1: Hero / What is OpenMontage -->
+    <div class="scene" id="scene-1">
+      <div class="scene-content">
+        <div class="eyebrow" id="s1-eyebrow">Agentic Video Production</div>
+        <h1 class="headline" id="s1-headline">OpenMontage</h1>
+        <p class="subheadline" id="s1-sub">The first open-source, agentic video production system. Turn your AI coding assistant into a full video production studio.</p>
+      </div>
+    </div>
+    
+    <!-- Scene 2: The Numbers -->
+    <div class="scene" id="scene-2">
+      <div class="scene-content">
+        <div class="eyebrow" id="s2-eyebrow">Scale & Capability</div>
+        <h2 class="headline" id="s2-headline" style="font-size: 72px;">Everything You Need</h2>
+        <div class="stats-row" id="s2-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="stat-1">12</div>
+            <div class="stat-label">Production Pipelines</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-2">52</div>
+            <div class="stat-label">Production Tools</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-3">500+</div>
+            <div class="stat-label">Agent Skills</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scene 3: What It Does -->
+    <div class="scene" id="scene-3">
+      <div class="scene-content">
+        <div class="eyebrow" id="s3-eyebrow">Capabilities</div>
+        <h2 class="headline" id="s3-headline" style="font-size: 68px; background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-magenta) 100%); -webkit-background-clip: text; background-clip: text;">What You Can Create</h2>
+        <div class="feature-list" id="s3-features">
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Explainer videos from web research</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Cinematic trailers with AI-generated footage</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Animated shorts from still images</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Podcast clips with auto-editing</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Documentary montages from stock footage</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text">Localized content in 10+ languages</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scene 4: Architecture -->
+    <div class="scene" id="scene-4">
+      <div class="scene-content">
+        <div class="eyebrow" id="s4-eyebrow">System Design</div>
+        <h2 class="headline" id="s4-headline" style="font-size: 64px;">Three-Layer Architecture</h2>
+        <div class="arch-grid" id="s4-arch">
+          <div class="arch-card">
+            <div class="arch-layer">Layer 1</div>
+            <div class="arch-title">Tools & Pipelines</div>
+            <div class="arch-desc">48 Python tools + 12 YAML pipeline manifests. What exists and how it's orchestrated.</div>
+          </div>
+          <div class="arch-card">
+            <div class="arch-layer">Layer 2</div>
+            <div class="arch-title">Skills</div>
+            <div class="arch-desc">124 Markdown skill files. How to use it — OpenMontage conventions and quality bars.</div>
+          </div>
+          <div class="arch-card">
+            <div class="arch-layer">Layer 3</div>
+            <div class="arch-title">Deep Knowledge</div>
+            <div class="arch-desc">47 external technology packs. How it works — expert-level tool knowledge.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scene 5: How It Works -->
+    <div class="scene" id="scene-5">
+      <div class="scene-content">
+        <div class="eyebrow" id="s5-eyebrow">Workflow</div>
+        <h2 class="headline" id="s5-headline" style="font-size: 60px;">Agent-First Design</h2>
+        <div class="code-block" id="s5-code">
+          <div class="code-line"><span class="code-comment"># Your AI assistant IS the orchestrator</span></div>
+          <div class="code-line">You: <span class="code-string">"Make an explainer about black holes"</span></div>
+          <div class="code-line">&nbsp;&nbsp;↓ Agent reads <span class="code-highlight">pipeline manifest</span> (YAML)</div>
+          <div class="code-line">&nbsp;&nbsp;↓ Agent reads <span class="code-highlight">director skills</span> (Markdown)</div>
+          <div class="code-line">&nbsp;&nbsp;↓ Agent calls <span class="code-highlight">Python tools</span> with scored selection</div>
+          <div class="code-line">&nbsp;&nbsp;↓ Agent <span class="code-highlight">self-reviews</span> against quality gates</div>
+          <div class="code-line">&nbsp;&nbsp;↓ Agent <span class="code-highlight">checkpoints state</span> (resumable)</div>
+          <div class="code-line">&nbsp;&nbsp;↓ You approve → <span class="code-highlight">Render</span> → Final video</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scene 6: Pipeline Flow -->
+    <div class="scene" id="scene-6">
+      <div class="scene-content">
+        <div class="eyebrow" id="s6-eyebrow">Production Flow</div>
+        <h2 class="headline" id="s6-headline" style="font-size: 58px;">7-Stage Pipeline</h2>
+        <div class="pipeline-container" id="s6-pipeline">
+          <div class="pipeline-stage">research</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">proposal</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">script</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">scene_plan</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">assets</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">edit</div>
+          <span class="pipeline-arrow">→</span>
+          <div class="pipeline-stage">compose</div>
+        </div>
+        <p class="body-text" id="s6-body" style="margin-top: 50px;">Every stage has a dedicated director skill — a markdown file teaching the agent exactly how to execute with quality checks and approval gates.</p>
+      </div>
+    </div>
+    
+    <!-- Scene 7: Key Features -->
+    <div class="scene" id="scene-7">
+      <div class="scene-content">
+        <div class="eyebrow" id="s7-eyebrow">Why It Matters</div>
+        <h2 class="headline" id="s7-headline" style="font-size: 56px;">Production Governance</h2>
+        <div class="feature-list" id="s7-features">
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">Live web research</strong> — 15-25 searches before scripting</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">Quality gates</strong> — blocks slideshow-looking renders</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">Decision audit trail</strong> — every choice logged with reasoning</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">Budget controls</strong> — cost estimation & spend caps</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">No vendor lock-in</strong> — swap providers freely</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet"></div>
+            <span class="feature-text"><strong style="color: var(--text-primary);">Reference-driven</strong> — paste a video you like as input</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scene 8: Final CTA -->
+    <div class="scene" id="scene-8">
+      <div class="scene-content" style="align-items: center; text-align: center;">
+        <div class="eyebrow" id="s8-eyebrow">Get Started</div>
+        <h2 class="headline" id="s8-headline">github.com/tdollar15/<br>OpenMontage</h2>
+        <div class="cta-box" id="s8-cta">
+          <div class="cta-text">Turn your AI assistant into a video production studio</div>
+          <div class="cta-sub">12 pipelines · 52 tools · 500+ skills · Zero to video, fully agentic</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    
+    <!-- Playback controls -->
+    <div class="playback-controls">
+      <button class="control-btn" id="play-btn">▶ Play</button>
+      <button class="control-btn" id="pause-btn">⏸ Pause</button>
+      <button class="control-btn" id="restart-btn">↺ Restart</button>
+    </div>
+    
+    <script>
+      // Mulberry32 PRNG for deterministic random
+      function mulberry32(a) {
+        return function() {
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+      }
+      const random = mulberry32(42);
+
+      // Initialize GSAP
+      gsap.registerPlugin();
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "power2.out", duration: 1 }
+      });
+
+      // Progress bar sync
+      tl.eventCallback("onUpdate", () => {
+        const progress = tl.progress() * 100;
+        document.getElementById("progress-bar").style.width = progress + "%";
+      });
+
+      // Scene timings
+      const sceneTimes = [
+        { id: "scene-1", start: 0, duration: 6 },
+        { id: "scene-2", start: 6, duration: 5.5 },
+        { id: "scene-3", start: 11.5, duration: 6 },
+        { id: "scene-4", start: 17.5, duration: 7 },
+        { id: "scene-5", start: 24.5, duration: 6.5 },
+        { id: "scene-6", start: 31, duration: 5.5 },
+        { id: "scene-7", start: 36.5, duration: 6 },
+        { id: "scene-8", start: 42.5, duration: 5 }
+      ];
+
+      // Build Timeline
+      sceneTimes.forEach((scene, index) => {
+        const el = document.getElementById(scene.id);
+        
+        // --- 1. Scene Transitions (Reveal) ---
+        if (index > 0) {
+          const prevScene = document.getElementById(sceneTimes[index - 1].id);
+          
+          // Push Slide Transition
+          tl.set(el, { opacity: 1, xPercent: 100, pointerEvents: "auto", zIndex: 10 + index }, scene.start);
+          tl.to(el, { xPercent: 0, duration: 1.2, ease: "expo.inOut" }, scene.start);
+          tl.to(prevScene, { xPercent: -30, opacity: 0.5, duration: 1.2, ease: "expo.inOut" }, scene.start);
+          tl.set(prevScene, { pointerEvents: "none", visibility: "hidden" }, scene.start + 1.2);
+        }
+
+        // --- 2. Content Entrances ---
+        const startTime = scene.start + (index === 0 ? 0 : 0.5); // Delay entrance slightly if transitioning
+
+        if (scene.id === "scene-1") {
+          tl.from("#s1-eyebrow", { y: 20, opacity: 0, duration: 0.8 }, startTime);
+          tl.from("#s1-headline", { y: 40, opacity: 0, duration: 1, ease: "expo.out" }, startTime + 0.2);
+          tl.from("#s1-sub", { y: 30, opacity: 0, duration: 1 }, startTime + 0.4);
+        }
+
+        if (scene.id === "scene-2") {
+          tl.from("#s2-eyebrow", { x: -30, opacity: 0 }, startTime);
+          tl.from("#s2-headline", { x: -50, opacity: 0, ease: "power4.out" }, startTime + 0.2);
+          tl.from("#s2-stats .stat-item", { 
+            scale: 0.8, 
+            opacity: 0, 
+            stagger: 0.2, 
+            ease: "back.out(1.7)" 
+          }, startTime + 0.4);
+        }
+
+        if (scene.id === "scene-3") {
+          tl.from("#s3-eyebrow", { opacity: 0 }, startTime);
+          tl.from("#s3-headline", { y: 20, opacity: 0 }, startTime + 0.2);
+          tl.from("#s3-features .feature-item", { 
+            x: -20, 
+            opacity: 0, 
+            stagger: 0.1, 
+            ease: "power2.out" 
+          }, startTime + 0.4);
+        }
+
+        if (scene.id === "scene-4") {
+          tl.from("#s4-eyebrow", { y: -20, opacity: 0 }, startTime);
+          tl.from("#s4-headline", { opacity: 0 }, startTime + 0.2);
+          tl.from("#s4-arch .arch-card", { 
+            y: 40, 
+            opacity: 0, 
+            stagger: 0.3, 
+            ease: "expo.out" 
+          }, startTime + 0.4);
+        }
+
+        if (scene.id === "scene-5") {
+          tl.from("#s5-eyebrow", { opacity: 0 }, startTime);
+          tl.from("#s5-headline", { scale: 0.9, opacity: 0 }, startTime + 0.2);
+          tl.from("#s5-code .code-line", { 
+            x: 20, 
+            opacity: 0, 
+            stagger: 0.15, 
+            ease: "power3.out" 
+          }, startTime + 0.5);
+        }
+
+        if (scene.id === "scene-6") {
+          tl.from("#s6-eyebrow", { opacity: 0 }, startTime);
+          tl.from("#s6-headline", { y: -30, opacity: 0 }, startTime + 0.2);
+          tl.from("#s6-pipeline .pipeline-stage", { 
+            scale: 0, 
+            opacity: 0, 
+            stagger: 0.1, 
+            ease: "back.out(2)" 
+          }, startTime + 0.4);
+          tl.from("#s6-pipeline .pipeline-arrow", { opacity: 0, stagger: 0.1 }, startTime + 0.6);
+          tl.from("#s6-body", { opacity: 0 }, startTime + 1);
+        }
+
+        if (scene.id === "scene-7") {
+          tl.from("#s7-eyebrow", { x: 30, opacity: 0 }, startTime);
+          tl.from("#s7-headline", { opacity: 0 }, startTime + 0.2);
+          tl.from("#s7-features .feature-item", { 
+            y: 20, 
+            opacity: 0, 
+            stagger: 0.1, 
+            ease: "power1.out" 
+          }, startTime + 0.4);
+        }
+
+        if (scene.id === "scene-8") {
+          tl.from("#s8-eyebrow", { y: 20, opacity: 0 }, startTime);
+          tl.from("#s8-headline", { scale: 1.2, opacity: 0, ease: "expo.out" }, startTime + 0.3);
+          tl.from("#s8-cta", { y: 50, opacity: 0, ease: "power4.out" }, startTime + 0.6);
+        }
+      });
+
+      // Ambient particle animation
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = 2 + random() * 4;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.left = random() * 100 + '%';
+        p.style.top = random() * 100 + '%';
+        p.style.opacity = 0.1 + random() * 0.4;
+        container.appendChild(p);
+        
+        const duration = 5 + random() * 10;
+        tl.to(p, {
+          y: (random() - 0.5) * 200,
+          x: (random() - 0.5) * 200,
+          opacity: 0,
+          duration: duration,
+          repeat: Math.floor(47.5 / duration),
+          yoyo: true,
+          ease: "sine.inOut"
+        }, 0);
+      }
+
+      // Glow orb breathing
+      tl.to('.glow-orb', {
+        scale: 1.1,
+        opacity: 0.12,
+        duration: 4,
+        repeat: 10,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: 1.5
+      }, 0);
+
+      // Register timeline for Hyperframes
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+
+      // Scrub support
+      window.addEventListener('message', (e) => {
+        if (e.data.type === 'scrub') {
+          tl.pause();
+          tl.progress(e.data.progress);
+        }
+      });
+
+      // Playback controls
+      const playBtn = document.getElementById('play-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const restartBtn = document.getElementById('restart-btn');
+
+      playBtn.addEventListener('click', () => {
+        tl.play();
+      });
+
+      pauseBtn.addEventListener('click', () => {
+        tl.pause();
+        pauseNarration();
+      });
+
+      restartBtn.addEventListener('click', () => {
+        tl.restart();
+        resetNarration();
+      });
+
+      // Narration audio management
+      const narrationAudios = [
+        document.getElementById('narration-1'),
+        document.getElementById('narration-2'),
+        document.getElementById('narration-3'),
+        document.getElementById('narration-4'),
+        document.getElementById('narration-5'),
+        document.getElementById('narration-6'),
+        document.getElementById('narration-7'),
+        document.getElementById('narration-8')
+      ];
+
+      function pauseNarration() {
+        narrationAudios.forEach(audio => {
+          if (audio) audio.pause();
+        });
+      }
+
+      function resetNarration() {
+        narrationAudios.forEach(audio => {
+          if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+        });
+      }
+
+      // Sync narration with timeline
+      tl.eventCallback('onUpdate', () => {
+        const currentTime = tl.time();
+        
+        narrationAudios.forEach((audio) => {
+          if (!audio) return;
+          const startTime = parseFloat(audio.dataset.start);
+          const duration = parseFloat(audio.dataset.duration);
+          
+          if (currentTime >= startTime && currentTime < startTime + duration) {
+            if (audio.paused) {
+              audio.play().catch(e => console.log('Audio play error:', e));
+            }
+          } else {
+            if (!audio.paused) {
+              audio.pause();
+            }
+          }
+        });
+      });
+    </script>
+  </div>
+</body>
+</html>
